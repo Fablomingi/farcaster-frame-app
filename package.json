@@ -1,0 +1,15 @@
+{
+  "name": "farcaster-frame-app",
+  "version": "1.0.0",
+  "description": "Farcaster Frame Brain",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.11.1",
+    "@neynar/nodejs-sdk": "^1.13.0",
+    "axios": "^1.7.2",
+    "cloudinary": "^2.2.0"
+  }
+}
