@@ -1,4 +1,4 @@
-// Bu bizim "Beyin" (Vercel Serverless Fonksiyonu)
+// Bu bizim "Beyin" (Vercel Serverless Fonksiyonu) - DÜZELTİLMİŞ VERSİYON
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { NeynarAPIClient } = require("@neynar/nodejs-sdk");
 const axios = require('axios');
@@ -25,10 +25,11 @@ export default async function handler(req, res) {
   
   // Sadece POST isteklerini kabul et (Farcaster Frame kuralı)
   if (req.method !== 'POST') {
-    // İlk ziyaret için Ana Sayfa Frame'ini göster
+    // İlk ziyaret (GET isteği) için Ana Sayfa Frame'ini göster
     return res.status(200).setHeader("Content-Type", "text/html").send(getInitialFrame());
   }
 
+  // --- POST İsteği Geldi (Kullanıcı Butona Bastı) ---
   try {
     // Farcaster'dan gelen datayı oku
     const body = req.body;
@@ -36,8 +37,8 @@ export default async function handler(req, res) {
     const inputText = body.untrustedData.inputText || ""; // Kullanıcının girdiği metin
     const buttonIndex = body.untrustedData.buttonIndex;
 
-    // --- DURUM 1: Kullanıcı ilk kez geldi veya "Başa Dön"e bastı ---
-    if (buttonIndex === 2) {
+    // --- DURUM 1: Kullanıcı "Başa Dön"e bastı (eğer eklersek) ---
+    if (buttonIndex === 2) { // 2. butona (Başa Dön) basılırsa
       return res.status(200).setHeader("Content-Type", "text/html").send(getInitialFrame());
     }
 
@@ -58,13 +59,11 @@ export default async function handler(req, res) {
     console.log("AI Konu Buldu:", topic);
 
     // 3. Logo Bul (Clearbit)
-    // AI'ın bulduğu konuya göre logoyu ara (örn: "vercel" -> "vercel.com")
     let logoUrl;
     try {
       const domain = `${topic.toLowerCase()}.com`;
       logoUrl = `https://logo.clearbit.com/${domain}`;
-      // Logoyu test et, 404 dönüyorsa varsayılan yap
-      await axios.get(logoUrl);
+      await axios.get(logoUrl); // Logoyu test et
       console.log("Logo Bulundu:", logoUrl);
     } catch (error) {
       console.log("Logo bulunamadı, varsayılan logo kullanılacak.");
@@ -72,26 +71,22 @@ export default async function handler(req, res) {
     }
 
     // 4. Görseli Birleştir (Cloudinary)
-    // Cloudinary'e diyoruz ki:
-    // 1. Arkaplan olarak bu PFP'yi al (pfpUrl)
-    // 2. Bulanıklaştır ve karart
-    // 3. Üstüne bu Logoyu koy (logoUrl), küçült ve sağ alta yerleştir
     const finalImageUrl = cloudinary.url(pfpUrl, {
       transformation: [
-        { width: 1000, height: 523, crop: 'fill', gravity: 'face', effect: 'blur:100' }, // Arkaplanı 1000x523 yap, yüzü ortala, bulanıklaştır
-        { effect: 'brightness:-30' }, // Biraz karart
+        { width: 1000, height: 523, crop: 'fill', gravity: 'face', effect: 'blur:100' }, 
+        { effect: 'brightness:-30' }, 
         {
-          overlay: { url: logoUrl }, // Logoyu üstüne ekle
-          width: 200, // Logo genişliği
-          height: 200, // Logo yüksekliği
+          overlay: { url: logoUrl }, 
+          width: 200, 
+          height: 200, 
           crop: 'limit',
-          gravity: 'south_east', // Sağ alt köşe
-          x: 40, // Sağdan boşluk
-          y: 40, // Alttan boşluk
+          gravity: 'south_east', 
+          x: 40, 
+          y: 40, 
           opacity: 90
         }
       ],
-      sign_url: true // URL'i güvenli hale getir
+      sign_url: true 
     });
     
     console.log("Yeni Resim URL'i:", finalImageUrl);
@@ -119,7 +114,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("HATA OLDU:", error);
     // Hata olursa en başa dön
-    return res.status(200).setHeader("Content-Type", "text/html").send(getInitialFrame("Bi hata oldu kank, tekrar dene?"));
+    return res.status(500).setHeader("Content-Type", "text/html").send(getInitialFrame("Bi hata oldu kank, tekrar dene?"));
   }
 }
 
